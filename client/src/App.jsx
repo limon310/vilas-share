@@ -3,6 +3,7 @@ import ProtectedRoute from "./components/common/ProtectedRoute";
 import AppLayout from "./components/layout/AppLayout";
 import LoginPage from "./pages/auth/LoginPage";
 import DashboardPage from "./pages/dashboard/DashboardPage";
+import ShareholdersPage from "./pages/shareholders/ShareholdersPage";
 
 function ComingSoon({ title }) {
   return (
@@ -44,10 +45,7 @@ export default function App() {
       <Route element={<ProtectedRoute />}>
         <Route element={<AppLayout />}>
           <Route index element={<DashboardPage />} />
-          <Route
-            path="shareholders"
-            element={<ComingSoon title="Shareholders" />}
-          />
+          <Route path="shareholders" element={<ShareholdersPage />} />
           <Route
             path="payments"
             element={<ComingSoon title="Payments" />}

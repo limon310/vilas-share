@@ -1,4 +1,4 @@
-
+import shareholderRoutes from "./routes/shareholder.routes.js";
 import express from "express";
 import cors from "cors";
 import helmet from "helmet";
@@ -32,6 +32,9 @@ app.use(
 
 // Authentication routes
 app.use("/api/auth", authRoutes);
+
+// share holders routes
+app.use("/api/shareholders", shareholderRoutes);
 
 app.get("/api/health", (req, res) => {
   res.status(200).json({
