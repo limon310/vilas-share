@@ -4,6 +4,7 @@ import AppLayout from "./components/layout/AppLayout";
 import LoginPage from "./pages/auth/LoginPage";
 import DashboardPage from "./pages/dashboard/DashboardPage";
 import ShareholdersPage from "./pages/shareholders/ShareholdersPage";
+import ProjectPage from "./pages/project/ProjectPage";
 
 function ComingSoon({ title }) {
   return (
@@ -66,10 +67,7 @@ export default function App() {
             path="notifications"
             element={<ComingSoon title="Notifications" />}
           />
-          <Route
-            path="project-details"
-            element={<ComingSoon title="Project Details" />}
-          />
+          <Route path="project-details" element={<ProjectPage />} />
           <Route
             path="directors"
             element={<ComingSoon title="Directors" />}
