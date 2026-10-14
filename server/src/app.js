@@ -5,6 +5,7 @@ import helmet from "helmet";
 import morgan from "morgan";
 import rateLimit from "express-rate-limit";
 import authRoutes from "./routes/auth.routes.js";
+import projectRoutes from "./routes/project.routes.js";
 
 const app = express();
 
@@ -35,6 +36,8 @@ app.use("/api/auth", authRoutes);
 
 // share holders routes
 app.use("/api/shareholders", shareholderRoutes);
+
+app.use("/api/project", projectRoutes);
 
 app.get("/api/health", (req, res) => {
   res.status(200).json({
