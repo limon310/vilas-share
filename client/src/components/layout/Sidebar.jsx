@@ -11,6 +11,7 @@ import {
   Building2,
   UserCog,
   X,
+  Wallet2,
 } from "lucide-react";
 
 const navigation = [
@@ -23,6 +24,7 @@ const navigation = [
   { label: "Notifications", path: "/notifications", icon: Bell },
   { label: "Project Details", path: "/project-details", icon: Building2 },
   { label: "Directors", path: "/directors", icon: UserCog },
+  { label: "Share Allocation",path: "/allocations",icon: Wallet2 },
 ];
 
 export default function Sidebar({ open, onClose }) {

@@ -5,6 +5,7 @@ import LoginPage from "./pages/auth/LoginPage";
 import DashboardPage from "./pages/dashboard/DashboardPage";
 import ShareholdersPage from "./pages/shareholders/ShareholdersPage";
 import ProjectPage from "./pages/project/ProjectPage";
+import ShareAllocationPage from "./pages/shareholders/ShareAllocationPage";
 
 function ComingSoon({ title }) {
   return (
@@ -47,6 +48,14 @@ export default function App() {
         <Route element={<AppLayout />}>
           <Route index element={<DashboardPage />} />
           <Route path="shareholders" element={<ShareholdersPage />} />
+          {/* <Route
+            path="allocations"
+            element={<ShareAllocationPage />}
+          /> */}
+          <Route
+            path="allocations"
+            element={<ShareAllocationPage />}
+          />
           <Route
             path="payments"
             element={<ComingSoon title="Payments" />}
