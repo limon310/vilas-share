@@ -498,6 +498,13 @@ export default function ShareAllocationPage() {
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState("");
 
+  const [page, setPage] = useState(1);
+  const [pagination, setPagination] = useState({
+    page: 1,
+    totalPages: 1,
+    total: 0,
+  });
+
   useEffect(() => {
     async function loadData() {
       try {
@@ -514,6 +521,15 @@ export default function ShareAllocationPage() {
         setShareholders(shareholderRes.data || []);
         setProject(projectRes.data || null);
         setAllocations(allocationRes.data || []);
+        setAllocations(allocationRes.data || []);
+
+        setPagination(
+          allocationRes.pagination || {
+            page: 1,
+            totalPages: 1,
+            total: (allocationRes.data || []).length,
+          }
+        );
       } catch (err) {
         console.error("Share Allocation load error:", err);
         setError(err.message || "Failed to load page data.");
@@ -524,6 +540,33 @@ export default function ShareAllocationPage() {
 
     loadData();
   }, []);
+
+  // page change function
+  async function changePage(nextPage) {
+    if (nextPage < 1 || nextPage > pagination.totalPages) return;
+
+    try {
+      setLoading(true);
+      setError("");
+
+      const response = await getShareAllocations(nextPage, 10);
+
+      setAllocations(response.data || []);
+      setPagination(
+        response.pagination || {
+          page: nextPage,
+          totalPages: 1,
+          total: (response.data || []).length,
+        }
+      );
+
+      setPage(nextPage);
+    } catch (err) {
+      setError(err.message || "Failed to load allocation records.");
+    } finally {
+      setLoading(false);
+    }
+  }
 
   if (loading) {
     return (
@@ -856,6 +899,37 @@ export default function ShareAllocationPage() {
 
         <div className="border-t border-base-300 px-5 py-3 text-sm text-base-content/60">
           Showing {allocations.length} allocation record(s)
+        </div>
+      </div>
+      
+      {/* pagination */}
+      <div className="flex flex-col gap-3 border-t border-base-300 p-4 sm:flex-row sm:items-center sm:justify-between">
+        <p className="text-sm text-base-content/60">
+          Total records: {pagination.total ?? allocations.length}
+        </p>
+
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            className="btn btn-sm btn-outline"
+            disabled={page <= 1 || loading}
+            onClick={() => changePage(page - 1)}
+          >
+            Previous
+          </button>
+
+          <span className="text-sm">
+            Page {page} of {pagination.totalPages || 1}
+          </span>
+
+          <button
+            type="button"
+            className="btn btn-sm btn-outline"
+            disabled={page >= pagination.totalPages || loading}
+            onClick={() => changePage(page + 1)}
+          >
+            Next
+          </button>
         </div>
       </div>
     </div>
