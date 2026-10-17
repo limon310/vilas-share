@@ -763,6 +763,101 @@ export default function ShareAllocationPage() {
           <p>Allocation records loaded: {allocations.length}</p>
         </div>
       </div>
+
+
+      {/* Share Allocation History */}
+      <div className="rounded-box border border-base-300 bg-base-100">
+        <div className="border-b border-base-300 p-5">
+          <h2 className="text-xl font-semibold">
+            Share Allocation History
+          </h2>
+          <p className="mt-1 text-sm text-base-content/60">
+            View all recently allocated shares.
+          </p>
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="table table-zebra">
+            <thead>
+              <tr>
+                <th>Shareholder</th>
+                <th>Quantity</th>
+                <th>Price / Share</th>
+                <th>Total Amount</th>
+                <th>Allocated By</th>
+                <th>Date</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {allocations.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="py-10 text-center">
+                    <p className="font-medium">No allocations found</p>
+                    <p className="mt-1 text-sm text-base-content/60">
+                      Allocated shares will appear here.
+                    </p>
+                  </td>
+                </tr>
+              ) : (
+                allocations.map((allocation) => (
+                  <tr key={allocation._id}>
+                    <td>
+                      <div className="font-medium">
+                        {allocation.shareholder?.fullName || "Unknown"}
+                      </div>
+                      <div className="text-xs text-base-content/60">
+                        {allocation.shareholder?.shareholderCode || "N/A"}
+                      </div>
+                    </td>
+
+                    <td className="font-semibold">
+                      {Number(allocation.quantity || 0).toLocaleString("en-BD")}
+                    </td>
+
+                    <td>
+                      ৳
+                      {Number(allocation.pricePerShare || 0).toLocaleString(
+                        "en-BD",
+                        { minimumFractionDigits: 2, maximumFractionDigits: 2 }
+                      )}
+                    </td>
+
+                    <td className="font-semibold">
+                      ৳
+                      {Number(allocation.totalAmount || 0).toLocaleString(
+                        "en-BD",
+                        { minimumFractionDigits: 2, maximumFractionDigits: 2 }
+                      )}
+                    </td>
+
+                    <td>
+                      {allocation.allocatedBy?.name || "N/A"}
+                    </td>
+
+                    <td>
+                      {allocation.createdAt
+                        ? new Date(allocation.createdAt).toLocaleDateString(
+                          "en-GB",
+                          {
+                            day: "2-digit",
+                            month: "short",
+                            year: "numeric",
+                          }
+                        )
+                        : "N/A"}
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        <div className="border-t border-base-300 px-5 py-3 text-sm text-base-content/60">
+          Showing {allocations.length} allocation record(s)
+        </div>
+      </div>
     </div>
   );
 }
