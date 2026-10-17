@@ -607,19 +607,19 @@ export default function ShareAllocationPage() {
     );
   }
 
-  if (error) {
-    return (
-      <div className="space-y-3 p-6">
-        <h1 className="text-2xl font-bold">Share Allocation</h1>
-        <div className="alert alert-error">
-          <span>{error}</span>
-        </div>
-        <p className="text-sm text-base-content/60">
-          Browser Console এবং Network tab-এ failed request পরীক্ষা করো।
-        </p>
-      </div>
-    );
-  }
+  // if (error) {
+  //   return (
+  //     <div className="space-y-3 p-6">
+  //       <h1 className="text-2xl font-bold">Share Allocation</h1>
+  //       <div className="alert alert-error">
+  //         <span>{error}</span>
+  //       </div>
+  //       <p className="text-sm text-base-content/60">
+  //         Browser Console এবং Network tab-এ failed request পরীক্ষা করো।
+  //       </p>
+  //     </div>
+  //   );
+  // }
 
   const totalShares = Number(project?.totalShares || 0);
   const allocatedShares = Number(project?.allocatedShares || 0);
@@ -708,6 +708,34 @@ export default function ShareAllocationPage() {
         <p className="mt-1 text-base-content/60">
           Manage project shares and allocation records.
         </p>
+        {/* error message */}
+        {error && (
+          <div role="alert" className="alert alert-error">
+            <span>{error}</span>
+            <button
+              type="button"
+              className="btn btn-sm btn-ghost"
+              onClick={() => setError("")}
+              aria-label="Dismiss error"
+            >
+              ✕
+            </button>
+          </div>
+        )}
+
+        {success && (
+          <div role="status" className="alert alert-success">
+            <span>{success}</span>
+            <button
+              type="button"
+              className="btn btn-sm btn-ghost"
+              onClick={() => setSuccess("")}
+              aria-label="Dismiss success message"
+            >
+              ✕
+            </button>
+          </div>
+        )}
       </div>
 
       <div className="grid gap-4 md:grid-cols-3">
