@@ -116,11 +116,67 @@ export async function createShareAllocation({
   }
 }
 
-export async function listShareAllocations({ page, limit }) {
+// export async function listShareAllocations({ page, limit }) {
+//   const skip = (page - 1) * limit;
+
+//   const [data, total] = await Promise.all([
+//     ShareAllocation.find()
+//       .populate("shareholder", "shareholderCode fullName phone")
+//       .populate("allocatedBy", "name email")
+//       .sort({ createdAt: -1, _id: -1 })
+//       .skip(skip)
+//       .limit(limit)
+//       .lean(),
+
+//     ShareAllocation.countDocuments(),
+//   ]);
+
+//   return {
+//     data,
+//     pagination: {
+//       page,
+//       limit,
+//       total,
+//       totalPages: Math.ceil(total / limit),
+//     },
+//   };
+// }
+
+
+export async function listShareAllocations({
+  page,
+  limit,
+  search = "",
+}) {
   const skip = (page - 1) * limit;
 
+  const filter = {};
+
+  if (search.trim()) {
+    // Escape special regex characters to treat search as plain text.
+    const escapedSearch = search.trim().replace(
+      /[.*+?^${}()|[\]\\]/g,
+      "\\$&"
+    );
+
+    const searchRegex = new RegExp(escapedSearch, "i");
+
+    const matchingShareholders = await Shareholder.find({
+      $or: [
+        { fullName: searchRegex },
+        { shareholderCode: searchRegex },
+      ],
+    })
+      .select("_id")
+      .lean();
+
+    filter.shareholder = {
+      $in: matchingShareholders.map((shareholder) => shareholder._id),
+    };
+  }
+
   const [data, total] = await Promise.all([
-    ShareAllocation.find()
+    ShareAllocation.find(filter)
       .populate("shareholder", "shareholderCode fullName phone")
       .populate("allocatedBy", "name email")
       .sort({ createdAt: -1, _id: -1 })
@@ -128,7 +184,7 @@ export async function listShareAllocations({ page, limit }) {
       .limit(limit)
       .lean(),
 
-    ShareAllocation.countDocuments(),
+    ShareAllocation.countDocuments(filter),
   ]);
 
   return {

@@ -504,6 +504,8 @@ export default function ShareAllocationPage() {
     totalPages: 1,
     total: 0,
   });
+  // search
+  const [search, setSearch] = useState("");
 
   useEffect(() => {
     async function loadData() {
@@ -549,7 +551,7 @@ export default function ShareAllocationPage() {
       setLoading(true);
       setError("");
 
-      const response = await getShareAllocations(nextPage, 10);
+      const response = await getShareAllocations(nextPage, 10, search);
 
       setAllocations(response.data || []);
       setPagination(
@@ -563,6 +565,34 @@ export default function ShareAllocationPage() {
       setPage(nextPage);
     } catch (err) {
       setError(err.message || "Failed to load allocation records.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  // search function
+
+  async function handleSearch(event) {
+    event.preventDefault();
+
+    try {
+      setLoading(true);
+      setError("");
+
+      const response = await getShareAllocations(1, 10, search);
+
+      setAllocations(response.data || []);
+      setPagination(
+        response.pagination || {
+          page: 1,
+          totalPages: 1,
+          total: (response.data || []).length,
+        }
+      );
+
+      setPage(1);
+    } catch (err) {
+      setError(err.message || "Failed to search allocations.");
     } finally {
       setLoading(false);
     }
@@ -809,6 +839,74 @@ export default function ShareAllocationPage() {
 
 
       {/* Share Allocation History */}
+
+      <div className="mb-4 p-4">
+        <label className="mb-2 block text-sm font-medium">
+          Search Shareholder
+        </label>
+
+        {/* <input
+          type="search"
+          className="input input-bordered w-full"
+          placeholder="Search by name or shareholder code..."
+          value={search}
+          onChange={(event) => setSearch(event.target.value)}
+        /> */}
+
+        <form
+          onSubmit={handleSearch}
+          className="flex flex-col gap-3 p-4 sm:flex-row"
+        >
+          <input
+            type="search"
+            className="input input-bordered w-full"
+            placeholder="Search by shareholder name or code..."
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            maxLength={100}
+          />
+
+          <button
+            type="submit"
+            className="btn btn-primary"
+            disabled={loading}
+          >
+            Search
+          </button>
+
+          <button
+            type="button"
+            className="btn btn-outline"
+            disabled={loading || !search}
+            onClick={() => {
+              setSearch("");
+              setLoading(true);
+              setError("");
+
+              getShareAllocations(1, 10, "")
+                .then((response) => {
+                  setAllocations(response.data || []);
+                  setPagination(
+                    response.pagination || {
+                      page: 1,
+                      totalPages: 1,
+                      total: (response.data || []).length,
+                    }
+                  );
+                  setPage(1);
+                })
+                .catch((err) => {
+                  setError(err.message || "Failed to load allocations.");
+                })
+                .finally(() => setLoading(false));
+            }}
+          >
+            Clear
+          </button>
+        </form>
+
+      </div>
+      {/* table content */}
       <div className="rounded-box border border-base-300 bg-base-100">
         <div className="border-b border-base-300 p-5">
           <h2 className="text-xl font-semibold">
@@ -901,7 +999,7 @@ export default function ShareAllocationPage() {
           Showing {allocations.length} allocation record(s)
         </div>
       </div>
-      
+
       {/* pagination */}
       <div className="flex flex-col gap-3 border-t border-base-300 p-4 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm text-base-content/60">

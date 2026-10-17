@@ -15,14 +15,35 @@ export async function getProject() {
   });
 }
 
-export async function getShareAllocations(page = 1, limit = 10) {
-  return apiRequest(
-    `/share-allocations?page=${page}&limit=${limit}`,
-    {
-      token: getToken(),
-    }
-  );
+// export async function getShareAllocations(page = 1, limit = 10) {
+//   return apiRequest(
+//     `/share-allocations?page=${page}&limit=${limit}`,
+//     {
+//       token: getToken(),
+//     }
+//   );
+// }
+
+
+export async function getShareAllocations(
+  page = 1,
+  limit = 10,
+  search = ""
+) {
+  const params = new URLSearchParams({
+    page: String(page),
+    limit: String(limit),
+  });
+
+  if (search.trim()) {
+    params.set("search", search.trim());
+  }
+
+  return apiRequest(`/share-allocations?${params.toString()}`, {
+    token: getToken(),
+  });
 }
+
 
 export async function createShareAllocation({
   shareholderId,
