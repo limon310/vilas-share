@@ -65,7 +65,7 @@ const projectSchema = new mongoose.Schema(
     { timestamps: true }
 );
 
-projectSchema.index({ projectKey: 1 }, { unique: true });
+// projectSchema.index({ projectKey: 1 }, { unique: true });
 
 const Project = mongoose.model("Project", projectSchema);
 
