@@ -96,6 +96,7 @@ export async function createManualPayment({
       },
     },
   ]);
+  // console.log("Payment aggregation result:", paymentResult);
 
   const paymentTotals = {
     verified: 0,

@@ -7,6 +7,8 @@ import rateLimit from "express-rate-limit";
 import authRoutes from "./routes/auth.routes.js";
 import projectRoutes from "./routes/project.routes.js";
 import shareAllocationRoutes from "./routes/shareAllocation.routes.js";
+import paymentRoutes from "./routes/payment.routes.js";
+
 
 const app = express();
 
@@ -41,6 +43,9 @@ app.use("/api/shareholders", shareholderRoutes);
 app.use("/api/project", projectRoutes);
 
 app.use("/api/share-allocations", shareAllocationRoutes);
+
+app.use("/api/payments", paymentRoutes);
+
 
 app.get("/api/health", (req, res) => {
   res.status(200).json({
