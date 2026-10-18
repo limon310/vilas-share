@@ -68,6 +68,17 @@ const paymentSchema = new mongoose.Schema(
       default: null,
     },
 
+    gatewayValidationId: {
+      type: String,
+      trim: true,
+      default: null,
+    },
+    gatewayBankTransactionId: {
+      type: String,
+      trim: true,
+      default: null,
+    },
+
     notes: {
       type: String,
       trim: true,

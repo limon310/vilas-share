@@ -11,7 +11,27 @@ import {
     initiateGatewayPaymentController,
 } from "../controllers/payment.controller.js";
 
+import {
+    gatewaySuccess,
+    gatewayFail,
+    gatewayCancel,
+    gatewayIpn,
+} from "../controllers/sslcommerz.controller.js";
+
 const router = Router();
+
+router.post("/gateway/success", gatewaySuccess);
+router.get("/gateway/success", gatewaySuccess);
+
+router.post("/gateway/fail", gatewayFail);
+router.get("/gateway/fail", gatewayFail);
+
+router.post("/gateway/cancel", gatewayCancel);
+router.get("/gateway/cancel", gatewayCancel);
+
+router.post("/gateway/ipn", gatewayIpn);
+
+// All remaining payment-management routes stay protected.
 
 router.use(protect, adminOnly);
 

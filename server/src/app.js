@@ -23,6 +23,7 @@ app.use(
 
 app.use(express.json({ limit: "100kb" }));
 app.use(morgan("dev"));
+app.use(express.urlencoded({ extended: true }));
 
 app.use(
   "/api",
