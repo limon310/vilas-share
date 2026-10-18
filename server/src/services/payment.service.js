@@ -96,8 +96,7 @@ export async function createManualPayment({
       },
     },
   ]);
-  // console.log("Payment aggregation result:", paymentResult);
-
+  
   const paymentTotals = {
     verified: 0,
     pending: 0,
@@ -140,6 +139,9 @@ export async function createManualPayment({
     ...(paidAt ? { paidAt } : {}),
     recordedBy: userId,
   });
+  console.log("Payment totals:", paymentTotals);
+  console.log("Total allocated:", totalAllocatedAmount);
+  console.log("Outstanding:", outstandingAmount);
 
   return {
     payment,
@@ -151,3 +153,92 @@ export async function createManualPayment({
     },
   };
 }
+
+export async function getPaymentHistory({
+  page = 1,
+  limit = 10,
+  status = "all",
+  search = "",
+}) {
+  const filter = {};
+
+  if (status !== "all") {
+    filter.status = status;
+  }
+
+  if (search) {
+    const matchingShareholders = await Shareholder.find({
+      $or: [
+        { fullName: { $regex: search, $options: "i" } },
+        { shareholderCode: { $regex: search, $options: "i" } },
+      ],
+    }).select("_id");
+
+    filter.$or = [
+      { transactionReference: { $regex: search, $options: "i" } },
+      { gatewayTransactionId: { $regex: search, $options: "i" } },
+      { shareholder: { $in: matchingShareholders.map((item) => item._id) } },
+    ];
+  }
+
+  const skip = (page - 1) * limit;
+
+  const [payments, total] = await Promise.all([
+    Payment.find(filter)
+      .populate("shareholder", "fullName shareholderCode")
+      .populate("project", "projectKey")
+      .populate("recordedBy", "name email")
+      .populate("verifiedBy", "name email")
+      .sort({ createdAt: -1, _id: -1 })
+      .skip(skip)
+      .limit(limit)
+      .lean(),
+
+    Payment.countDocuments(filter),
+  ]);
+
+  return {
+    payments,
+    pagination: {
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit),
+    },
+  };
+}
+
+export async function reviewPayment({ paymentId, status, userId }) {
+  const payment = await Payment.findById(paymentId);
+
+  if (!payment) {
+    const error = new Error("Payment not found.");
+    error.status = 404;
+    throw error;
+  }
+
+  if (payment.status !== "pending") {
+    const error = new Error(
+      `Only pending payments can be reviewed. Current status: ${payment.status}.`
+    );
+    error.status = 409;
+    throw error;
+  }
+
+  if (!["verified", "rejected"].includes(status)) {
+    const error = new Error("Invalid payment review status.");
+    error.status = 400;
+    throw error;
+  }
+
+  if (status === "verified") {
+    payment.verifiedBy = userId;
+    payment.verifiedAt = new Date();
+  }
+
+  payment.status = status;
+  await payment.save();
+
+  return payment;
+}
+

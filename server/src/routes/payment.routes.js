@@ -1,9 +1,20 @@
 
 import { Router } from "express";
 import { protect, adminOnly } from "../middleware/auth.middleware.js";
-import { postManualPayment } from "../controllers/payment.controller.js";
+// import { postManualPayment } from "../controllers/payment.controller.js";
+import {
+    postManualPayment,
+    getPayments,
+    reviewPaymentStatus,
+} from "../controllers/payment.controller.js";
 
 const router = Router();
+
+router.use(protect, adminOnly);
+
+router.get("/", getPayments);
+router.post("/", postManualPayment);
+router.patch("/:paymentId/review", reviewPaymentStatus);
 
 // Only authenticated admins can record manual payments.
 router.post("/", protect, adminOnly, postManualPayment);
