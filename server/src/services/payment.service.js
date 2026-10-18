@@ -3,6 +3,8 @@ import Project from "../models/Project.js";
 import Shareholder from "../models/Shareholder.js";
 import ShareAllocation from "../models/ShareAllocation.js";
 import Payment from "../models/Payment.js";
+import crypto from "node:crypto";
+import { getSSLCommerzClient } from "../config/sslcommerz.js";
 
 function createServiceError(message, status = 400) {
   const error = new Error(message);
@@ -361,6 +363,165 @@ export async function searchPaymentShareholders(search = "") {
     .lean();
 
   return shareholders;
+}
+
+export async function initiateGatewayPayment({
+  shareholderId,
+  amount,
+  userId,
+}) {
+  const project = await Project.findOne({
+    projectKey: "main",
+    status: "active",
+  });
+
+  if (!project) {
+    const error = new Error("Active project not found.");
+    error.statusCode = 404;
+    throw error;
+  }
+
+  const shareholder = await Shareholder.findOne({
+    _id: shareholderId,
+    status: "active",
+  });
+
+  if (!shareholder) {
+    const error = new Error("Active shareholder not found.");
+    error.statusCode = 404;
+    throw error;
+  }
+
+  const allocation = await ShareAllocation.aggregate([
+    {
+      $match: {
+        shareholder: shareholder._id,
+        project: project._id,
+      },
+    },
+    {
+      $group: {
+        _id: null,
+        total: { $sum: "$totalAmount" },
+      },
+    },
+  ]);
+
+  const payments = await Payment.aggregate([
+    {
+      $match: {
+        shareholder: shareholder._id,
+        project: project._id,
+        status: { $in: ["pending", "verified"] },
+      },
+    },
+    {
+      $group: {
+        _id: "$status",
+        total: { $sum: "$amount" },
+      },
+    },
+  ]);
+
+  const allocatedAmount = allocation[0]?.total ?? 0;
+
+  const paidAndPending = payments.reduce(
+    (sum, payment) => sum + payment.total,
+    0
+  );
+
+  const outstanding = Math.round(
+    (allocatedAmount - paidAndPending) * 100
+  ) / 100;
+
+  if (outstanding <= 0 || amount > outstanding) {
+    const error = new Error(
+      "Payment amount exceeds the outstanding balance."
+    );
+    error.statusCode = 400;
+    throw error;
+  }
+
+  // SSLCommerz documentation specifies a minimum transaction
+  // amount of BDT 10 for the standard integration.
+  if (amount < 10 || amount > 500000) {
+    const error = new Error(
+      "Gateway payment must be between BDT 10 and BDT 500,000."
+    );
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const tranId = `UV_${crypto.randomUUID()}`;
+
+  const payment = await Payment.create({
+    shareholder: shareholder._id,
+    project: project._id,
+    amount,
+    paymentMethod: "sslcommerz",
+    paymentType: "gateway",
+    status: "pending",
+    gatewayTransactionId: tranId,
+    recordedBy: userId,
+    notes: "SSLCommerz sandbox payment",
+  });
+
+  try {
+    const sslcz = getSSLCommerzClient();
+
+    const response = await sslcz.init({
+      total_amount: amount,
+      currency: "BDT",
+      tran_id: tranId,
+
+      success_url: `${process.env.SERVER_URL}/api/payments/gateway/success`,
+      fail_url: `${process.env.SERVER_URL}/api/payments/gateway/fail`,
+      cancel_url: `${process.env.SERVER_URL}/api/payments/gateway/cancel`,
+      ipn_url: `${process.env.SERVER_URL}/api/payments/gateway/ipn`,
+
+      shipping_method: "NO",
+      product_name: "Uttara Vilas Share Payment",
+      product_category: "Share Payment",
+      product_profile: "general",
+
+      cus_name: shareholder.fullName,
+      cus_email: "customer@example.com",
+      cus_add1: "Bangladesh",
+      cus_city: "Dhaka",
+      cus_country: "Bangladesh",
+      cus_phone: "01700000000",
+
+      value_a: String(payment._id),
+    });
+
+    if (
+      response?.status !== "SUCCESS" ||
+      !response?.GatewayPageURL
+    ) {
+      throw new Error("SSLCommerz could not create a checkout session.");
+    }
+
+    return {
+      paymentId: payment._id,
+      gatewayUrl: response.GatewayPageURL,
+    };
+  } catch (error) {
+    // Do not delete the payment record. Keep an audit trail.
+    await Payment.updateOne(
+      {
+        _id: payment._id,
+        status: "pending",
+      },
+      {
+        $set: {
+          status: "failed",
+          notes: "Gateway session creation failed",
+        },
+      }
+    );
+
+    throw error;
+  }
 }
 
 

@@ -7,7 +7,12 @@ import {
   reviewPayment,
   getPaymentSummary,
   searchPaymentShareholders,
+  initiateGatewayPayment,
 } from "../services/payment.service.js";
+
+import {
+  initiateGatewayPaymentSchema,
+} from "../validators/payment.validator.js";
 
 export async function postManualPayment(req, res, next) {
   try {
@@ -152,6 +157,39 @@ export async function searchPaymentShareholdersController(req, res, next) {
     return res.status(200).json({
       success: true,
       data: shareholders,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function initiateGatewayPaymentController(
+  req,
+  res,
+  next
+) {
+  try {
+    const parsed = initiateGatewayPaymentSchema.safeParse(
+      req.body
+    );
+
+    if (!parsed.success) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid gateway payment details.",
+        errors: parsed.error.flatten(),
+      });
+    }
+
+    const result = await initiateGatewayPayment({
+      ...parsed.data,
+      userId: req.user._id,
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Gateway session created.",
+      data: result,
     });
   } catch (error) {
     next(error);

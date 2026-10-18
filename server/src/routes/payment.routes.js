@@ -8,11 +8,17 @@ import {
     reviewPaymentStatus,
     getPaymentSummaryController,
     searchPaymentShareholdersController,
+    initiateGatewayPaymentController,
 } from "../controllers/payment.controller.js";
 
 const router = Router();
 
 router.use(protect, adminOnly);
+
+router.post(
+    "/gateway/initiate",
+    initiateGatewayPaymentController
+);
 
 router.get(
     "/shareholders",

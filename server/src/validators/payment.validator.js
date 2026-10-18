@@ -45,3 +45,22 @@ export const createPaymentSchema = z.object({
     .date()
     .optional(),
 });
+
+export const initiateGatewayPaymentSchema = z.object({
+  shareholderId: z
+    .string()
+    .regex(/^[a-f\d]{24}$/i, "Invalid shareholder ID."),
+  amount: z.coerce
+    .number()
+    .finite()
+    .positive()
+    .max(500000)
+    .refine(
+      (value) => Math.round(value * 100) / 100 === value,
+      "Amount can have at most two decimal places."
+    )
+    .refine(
+      (value) => value >= 10,
+      "Minimum gateway payment is BDT 10."
+    ),
+});
