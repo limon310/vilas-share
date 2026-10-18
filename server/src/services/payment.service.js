@@ -86,7 +86,7 @@ export async function createManualPayment({
         shareholder: shareholder._id,
         project: project._id,
         status: { $in: ["verified", "pending"] },
-        paymentType: "manual",
+        // paymentType: "manual",
       },
     },
     {
@@ -207,39 +207,57 @@ export async function getPaymentHistory({
     },
   };
 }
-
 export async function reviewPayment({ paymentId, status, userId }) {
-  const payment = await Payment.findById(paymentId);
+  if (!["verified", "rejected"].includes(status)) {
+    const error = new Error("Invalid payment review status.");
+    error.statusCode = 400;
+    throw error;
+  }
 
-  if (!payment) {
+  const update = {
+    status,
+  };
+
+  if (status === "verified") {
+    update.verifiedBy = userId;
+    update.verifiedAt = new Date();
+  }
+
+  const payment = await Payment.findOneAndUpdate(
+    {
+      _id: paymentId,
+      status: "pending",
+    },
+    {
+      $set: update,
+    },
+    {
+      new: true,
+      runValidators: true,
+    }
+  )
+    .populate("shareholder", "fullName shareholderCode")
+    .populate("project", "projectKey")
+    .populate("recordedBy", "name email")
+    .populate("verifiedBy", "name email");
+
+  if (payment) {
+    return payment;
+  }
+
+  const existingPayment = await Payment.findById(paymentId);
+
+  if (!existingPayment) {
     const error = new Error("Payment not found.");
     error.status = 404;
     throw error;
   }
 
-  if (payment.status !== "pending") {
-    const error = new Error(
-      `Only pending payments can be reviewed. Current status: ${payment.status}.`
-    );
-    error.status = 409;
-    throw error;
-  }
-
-  if (!["verified", "rejected"].includes(status)) {
-    const error = new Error("Invalid payment review status.");
-    error.status = 400;
-    throw error;
-  }
-
-  if (status === "verified") {
-    payment.verifiedBy = userId;
-    payment.verifiedAt = new Date();
-  }
-
-  payment.status = status;
-  await payment.save();
-
-  return payment;
+  const error = new Error(
+    `This payment has already been ${existingPayment.status}.`
+  );
+  error.status = 409;
+  throw error;
 }
 
 export async function getPaymentSummary() {
