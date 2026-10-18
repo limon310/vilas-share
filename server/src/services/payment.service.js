@@ -320,4 +320,29 @@ export async function getPaymentSummary() {
   };
 }
 
+export async function searchPaymentShareholders(search = "") {
+  const query = {
+    status: "active",
+  };
+
+  const term = search.trim();
+
+  if (term) {
+    const escapedTerm = term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+    query.$or = [
+      { fullName: { $regex: escapedTerm, $options: "i" } },
+      { shareholderCode: { $regex: escapedTerm, $options: "i" } },
+    ];
+  }
+
+  const shareholders = await Shareholder.find(query)
+    .select("_id fullName shareholderCode")
+    .sort({ fullName: 1 })
+    .limit(10)
+    .lean();
+
+  return shareholders;
+}
+
 

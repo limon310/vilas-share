@@ -7,11 +7,17 @@ import {
     getPayments,
     reviewPaymentStatus,
     getPaymentSummaryController,
+    searchPaymentShareholdersController,
 } from "../controllers/payment.controller.js";
 
 const router = Router();
 
 router.use(protect, adminOnly);
+
+router.get(
+    "/shareholders",
+    searchPaymentShareholdersController
+);
 
 router.get("/summary", getPaymentSummaryController);
 router.get("/", getPayments);

@@ -6,6 +6,7 @@ import {
   getPaymentHistory,
   reviewPayment,
   getPaymentSummary,
+  searchPaymentShareholders,
 } from "../services/payment.service.js";
 
 export async function postManualPayment(req, res, next) {
@@ -134,4 +135,27 @@ export async function getPaymentSummaryController(req, res, next) {
     next(error);
   }
 }
+
+export async function searchPaymentShareholdersController(req, res, next) {
+  try {
+    const search = String(req.query.search ?? "").trim();
+
+    if (search.length > 100) {
+      return res.status(400).json({
+        success: false,
+        message: "Search must not exceed 100 characters.",
+      });
+    }
+
+    const shareholders = await searchPaymentShareholders(search);
+
+    return res.status(200).json({
+      success: true,
+      data: shareholders,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
 

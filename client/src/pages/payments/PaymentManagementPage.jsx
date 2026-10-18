@@ -1,5 +1,5 @@
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, useRef } from "react";
 import {
     Banknote,
     CheckCircle2,
@@ -18,6 +18,7 @@ import {
     createManualPayment,
     reviewPayment,
     getPaymentSummary,
+    searchPaymentShareholders,
 } from "../../services/paymentService";
 
 const initialForm = {
@@ -87,6 +88,42 @@ export default function PaymentManagementPage() {
     const [form, setForm] = useState(initialForm);
     const [submitting, setSubmitting] = useState(false);
     const [summary, setSummary] = useState(null);
+    const [shareholderSearch, setShareholderSearch] = useState("");
+    const [shareholderOptions, setShareholderOptions] = useState([]);
+    const [selectedShareholder, setSelectedShareholder] = useState(null);
+    const [shareholderLoading, setShareholderLoading] = useState(false);
+
+    useEffect(() => {
+        if (!modalOpen) return;
+
+        let cancelled = false;
+
+        const timer = setTimeout(async () => {
+            setShareholderLoading(true);
+
+            try {
+                const result = await searchPaymentShareholders(shareholderSearch);
+
+                if (!cancelled) {
+                    setShareholderOptions(result.data || []);
+                }
+            } catch (err) {
+                if (!cancelled) {
+                    setError(err.message || "Failed to search shareholders.");
+                }
+            } finally {
+                if (!cancelled) {
+                    setShareholderLoading(false);
+                }
+            }
+        }, 300);
+
+        return () => {
+            cancelled = true;
+            clearTimeout(timer);
+        };
+    }, [modalOpen, shareholderSearch]);
+
 
     const loadPayments = useCallback(async () => {
         setLoading(true);
@@ -329,7 +366,7 @@ export default function PaymentManagementPage() {
                             </button>
                         </div>
                     </div>
-
+                    {/* table */}
                     <div className="overflow-x-auto">
                         <table className="table table-zebra">
                             <thead>
@@ -434,7 +471,7 @@ export default function PaymentManagementPage() {
                             </tbody>
                         </table>
                     </div>
-
+                    {/* pagination */}
                     <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
                         <p className="text-sm text-base-content/60">
                             {pagination.total === 0
@@ -485,22 +522,83 @@ export default function PaymentManagementPage() {
 
                         <form onSubmit={handleCreatePayment} className="mt-5 space-y-4">
                             <div className="form-control">
-                                <label className="label" htmlFor="shareholderId">
-                                    <span className="label-text">Shareholder Object ID</span>
+                                <label className="label" htmlFor="shareholderSearch">
+                                    <span className="label-text">Select Shareholder</span>
                                 </label>
-                                <input
-                                    id="shareholderId"
-                                    className="input input-bordered w-full"
-                                    value={form.shareholderId}
-                                    onChange={(event) =>
-                                        setForm({ ...form, shareholderId: event.target.value })
-                                    }
-                                    placeholder="MongoDB shareholder _id"
-                                    required
-                                    pattern="[a-fA-F0-9]{24}"
-                                    title="Enter a valid 24-character MongoDB ObjectId"
-                                />
+
+                                {selectedShareholder ? (
+                                    <div className="flex items-center justify-between gap-3 rounded-xl border border-base-300 p-3">
+                                        <div>
+                                            <p className="font-semibold">
+                                                {selectedShareholder.fullName}
+                                            </p>
+                                            <p className="text-sm text-base-content/60">
+                                                {selectedShareholder.shareholderCode}
+                                            </p>
+                                        </div>
+
+                                        <button
+                                            type="button"
+                                            className="btn btn-sm btn-ghost"
+                                            onClick={() => {
+                                                setSelectedShareholder(null);
+                                                setForm((current) => ({
+                                                    ...current,
+                                                    shareholderId: "",
+                                                }));
+                                            }}
+                                        >
+                                            Change
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <>
+                                        <input
+                                            id="shareholderSearch"
+                                            className="input input-bordered w-full"
+                                            value={shareholderSearch}
+                                            onChange={(event) => setShareholderSearch(event.target.value)}
+                                            placeholder="Search by name or shareholder code..."
+                                            autoComplete="off"
+                                        />
+
+                                        <div className="mt-2 max-h-48 overflow-y-auto rounded-xl border border-base-300">
+                                            {shareholderLoading ? (
+                                                <p className="p-3 text-sm">Searching...</p>
+                                            ) : shareholderOptions.length > 0 ? (
+                                                shareholderOptions.map((shareholder) => (
+                                                    <button
+                                                        key={shareholder._id}
+                                                        type="button"
+                                                        className="flex w-full flex-col items-start border-b border-base-200 p-3 text-left last:border-b-0 hover:bg-base-200"
+                                                        onClick={() => {
+                                                            setSelectedShareholder(shareholder);
+                                                            setForm((current) => ({
+                                                                ...current,
+                                                                shareholderId: shareholder._id,
+                                                            }));
+                                                            setShareholderSearch("");
+                                                            setShareholderOptions([]);
+                                                        }}
+                                                    >
+                                                        <span className="font-medium">
+                                                            {shareholder.fullName}
+                                                        </span>
+                                                        <span className="text-xs text-base-content/60">
+                                                            {shareholder.shareholderCode}
+                                                        </span>
+                                                    </button>
+                                                ))
+                                            ) : (
+                                                <p className="p-3 text-sm text-base-content/60">
+                                                    No shareholders found.
+                                                </p>
+                                            )}
+                                        </div>
+                                    </>
+                                )}
                             </div>
+
 
                             <div className="grid gap-4 sm:grid-cols-2">
                                 <div className="form-control">

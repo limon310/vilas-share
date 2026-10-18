@@ -42,3 +42,11 @@ export function getPaymentSummary() {
     token: getToken(),
   });
 }
+
+export function searchPaymentShareholders(search = "") {
+  const params = new URLSearchParams({ search });
+
+  return apiRequest(`/payments/shareholders?${params.toString()}`, {
+    token: getToken(),
+  });
+}
