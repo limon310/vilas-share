@@ -1,9 +1,11 @@
 
 import { createPaymentSchema } from "../validators/payment.validator.js";
-import { createManualPayment } from "../services/payment.service.js";
+// import { createManualPayment } from "../services/payment.service.js";
 import {
+  createManualPayment,
   getPaymentHistory,
   reviewPayment,
+  getPaymentSummary,
 } from "../services/payment.service.js";
 
 export async function postManualPayment(req, res, next) {
@@ -114,6 +116,19 @@ export async function reviewPaymentStatus(req, res, next) {
       success: true,
       message: `Payment ${status} successfully.`,
       data: payment,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function getPaymentSummaryController(req, res, next) {
+  try {
+    const summary = await getPaymentSummary();
+
+    return res.status(200).json({
+      success: true,
+      data: summary,
     });
   } catch (error) {
     next(error);

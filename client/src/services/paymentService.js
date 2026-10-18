@@ -36,3 +36,9 @@ export function reviewPayment(paymentId, status) {
     body: { status },
   });
 }
+
+export function getPaymentSummary() {
+  return apiRequest("/payments/summary", {
+    token: getToken(),
+  });
+}

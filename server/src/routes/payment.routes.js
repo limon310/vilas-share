@@ -6,12 +6,14 @@ import {
     postManualPayment,
     getPayments,
     reviewPaymentStatus,
+    getPaymentSummaryController,
 } from "../controllers/payment.controller.js";
 
 const router = Router();
 
 router.use(protect, adminOnly);
 
+router.get("/summary", getPaymentSummaryController);
 router.get("/", getPayments);
 router.post("/", postManualPayment);
 router.patch("/:paymentId/review", reviewPaymentStatus);

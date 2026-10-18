@@ -96,7 +96,7 @@ export async function createManualPayment({
       },
     },
   ]);
-  
+
   const paymentTotals = {
     verified: 0,
     pending: 0,
@@ -241,4 +241,83 @@ export async function reviewPayment({ paymentId, status, userId }) {
 
   return payment;
 }
+
+export async function getPaymentSummary() {
+  const project = await Project.findOne({ projectKey: "main" }).lean();
+
+  if (!project) {
+    const error = new Error("Project configuration has not been created.");
+    error.status = 404;
+    throw error;
+  }
+
+  const [allocationResult, paymentResult] = await Promise.all([
+    ShareAllocation.aggregate([
+      { $match: { project: project._id } },
+      {
+        $group: {
+          _id: null,
+          totalAllocatedAmount: { $sum: "$totalAmount" },
+        },
+      },
+    ]),
+
+    Payment.aggregate([
+      {
+        $match: {
+          project: project._id,
+          status: { $in: ["verified", "pending"] },
+        },
+      },
+      {
+        $group: {
+          _id: "$status",
+          total: { $sum: "$amount" },
+          count: { $sum: 1 },
+        },
+      },
+    ]),
+  ]);
+
+  const totalAllocatedAmount = Number(
+    (allocationResult[0]?.totalAllocatedAmount || 0).toFixed(2)
+  );
+
+  const totals = {
+    verifiedAmount: 0,
+    pendingAmount: 0,
+    verifiedCount: 0,
+    pendingCount: 0,
+  };
+
+  for (const item of paymentResult) {
+    if (item._id === "verified") {
+      totals.verifiedAmount = Number(item.total.toFixed(2));
+      totals.verifiedCount = item.count;
+    }
+
+    if (item._id === "pending") {
+      totals.pendingAmount = Number(item.total.toFixed(2));
+      totals.pendingCount = item.count;
+    }
+  }
+
+  const outstandingAmount = Number(
+    (
+      totalAllocatedAmount -
+      totals.verifiedAmount -
+      totals.pendingAmount
+    ).toFixed(2)
+  );
+
+  return {
+    totalAllocatedAmount,
+    verifiedAmount: totals.verifiedAmount,
+    pendingAmount: totals.pendingAmount,
+    outstandingAmount: Math.max(0, outstandingAmount),
+    verifiedCount: totals.verifiedCount,
+    pendingCount: totals.pendingCount,
+  };
+}
+
 
