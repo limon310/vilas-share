@@ -12,6 +12,7 @@ import {
     Plus,
     Check,
     X,
+    ReceiptText,
 } from "lucide-react";
 import {
     getPayments,
@@ -21,6 +22,8 @@ import {
     searchPaymentShareholders,
     initiateGatewayPayment,
 } from "../../services/paymentService";
+
+import PaymentReceipt from "./PaymentReceipt";
 
 const initialForm = {
     shareholderId: "",
@@ -106,6 +109,7 @@ export default function PaymentManagementPage() {
     const [shareholderLoading, setShareholderLoading] = useState(false);
     const [gatewayLoading, setGatewayLoading] = useState(false);
     const [gatewayError, setGatewayError] = useState("");
+    const [selectedReceipt, setSelectedReceipt] = useState(null);
 
     useEffect(() => {
         if (!modalOpen) return;
@@ -562,6 +566,16 @@ export default function PaymentManagementPage() {
                                                             </button>
                                                         </div>
                                                     )}
+                                                {payment.status === "verified" && (
+                                                    <button
+                                                        type="button"
+                                                        className="btn btn-outline btn-sm"
+                                                        onClick={() => setSelectedReceipt(payment)}
+                                                    >
+                                                        <ReceiptText size={16} />
+                                                        Receipt
+                                                    </button>
+                                                )}
                                             </td>
                                         </tr>
                                     ))
@@ -829,6 +843,12 @@ export default function PaymentManagementPage() {
                         Close
                     </button>
                 </div>
+            )}
+            {selectedReceipt && (
+                <PaymentReceipt
+                    payment={selectedReceipt}
+                    onClose={() => setSelectedReceipt(null)}
+                />
             )}
         </div>
     );
