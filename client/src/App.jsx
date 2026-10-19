@@ -7,6 +7,7 @@ import ShareholdersPage from "./pages/shareholders/ShareholdersPage";
 import ProjectPage from "./pages/project/ProjectPage";
 import ShareAllocationPage from "./pages/shareholders/ShareAllocationPage";
 import PaymentManagementPage from "./pages/payments/PaymentManagementPage";
+import ShareholderPaymentLedgerPage from "./pages/payments/ShareholderPaymentLedgerPage";
 
 function ComingSoon({ title }) {
   return (
@@ -61,6 +62,14 @@ export default function App() {
             path="/payments"
             element={<PaymentManagementPage />}
           />
+          <Route
+            path="/payment-ledger"
+            element={<ShareholderPaymentLedgerPage />}
+          />
+          {/* <Route
+            path="/payments/shareholder-ledger"
+            element={<ShareholderPaymentLedgerPage />}
+          /> */}
           <Route
             path="installments"
             element={<ComingSoon title="Installments" />}

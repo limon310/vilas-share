@@ -65,3 +65,12 @@ export function initiateGatewayPayment(payload) {
     body: payload,
   });
 }
+
+export function getShareholderPaymentLedger(shareholderId) {
+  return apiRequest(
+    `/payments/shareholders/${shareholderId}/ledger`,
+    {
+      token: getToken(),
+    }
+  );
+}

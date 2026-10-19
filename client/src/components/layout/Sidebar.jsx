@@ -12,12 +12,14 @@ import {
   UserCog,
   X,
   Wallet2,
+  ReceiptText,
 } from "lucide-react";
 
 const navigation = [
   { label: "Dashboard", path: "/", icon: LayoutDashboard },
   { label: "Shareholders", path: "/shareholders", icon: Users },
   { label: "Payments", path: "/payments", icon: CreditCard },
+  // { label: "Shareholder Ledger",path: "/payments/shareholder-ledger",icon: ReceiptText },
   { label: "Installments", path: "/installments", icon: CalendarDays },
   { label: "Rental Income", path: "/rental-income", icon: Wallet },
   { label: "Expenses", path: "/expenses", icon: Receipt },
