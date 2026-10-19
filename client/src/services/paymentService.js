@@ -50,3 +50,18 @@ export function searchPaymentShareholders(search = "") {
     token: getToken(),
   });
 }
+
+export function getGatewayPaymentStatus(paymentId) {
+  return apiRequest(
+    `/payments/gateway/${paymentId}/status`,
+    { token: getToken() }
+  );
+}
+
+export function initiateGatewayPayment(payload) {
+  return apiRequest("/payments/gateway/initiate", {
+    method: "POST",
+    token: getToken(),
+    body: payload,
+  });
+}

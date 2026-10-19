@@ -19,6 +19,7 @@ import {
     reviewPayment,
     getPaymentSummary,
     searchPaymentShareholders,
+    initiateGatewayPayment,
 } from "../../services/paymentService";
 
 const initialForm = {
@@ -92,6 +93,8 @@ export default function PaymentManagementPage() {
     const [shareholderOptions, setShareholderOptions] = useState([]);
     const [selectedShareholder, setSelectedShareholder] = useState(null);
     const [shareholderLoading, setShareholderLoading] = useState(false);
+    const [gatewayLoading, setGatewayLoading] = useState(false);
+    const [gatewayError, setGatewayError] = useState("");
 
     useEffect(() => {
         if (!modalOpen) return;
@@ -203,6 +206,44 @@ export default function PaymentManagementPage() {
         }
     };
 
+    async function handleGatewayCheckout() {
+        if (!form.shareholderId) {
+            setGatewayError("Please select a shareholder.");
+            return;
+        }
+
+        const amount = Number(form.amount);
+
+        if (!Number.isFinite(amount) || amount < 10) {
+            setGatewayError("Minimum gateway payment is BDT 10.");
+            return;
+        }
+
+        try {
+            setGatewayLoading(true);
+            setGatewayError("");
+
+            const result = await initiateGatewayPayment({
+                shareholderId: form.shareholderId,
+                amount,
+            });
+
+            const { gatewayUrl } = result.data || {};
+
+            if (!gatewayUrl) {
+                throw new Error("Gateway checkout URL was not returned.");
+            }
+
+            window.location.assign(gatewayUrl);
+        } catch (error) {
+            setGatewayError(
+                error.message || "Unable to start gateway checkout."
+            );
+        } finally {
+            setGatewayLoading(false);
+        }
+    }
+
     const handleCreatePayment = async (event) => {
         event.preventDefault();
         setSubmitting(true);
@@ -288,7 +329,7 @@ export default function PaymentManagementPage() {
                     </button>
                 </div>
             )}
-
+            {/* summary card */}
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                 <SummaryCard
                     title="Total Allocated"
@@ -695,6 +736,31 @@ export default function PaymentManagementPage() {
                                     Save Payment
                                 </button>
                             </div>
+
+                            <div className="mt-4 space-y-3">
+                                {gatewayError && (
+                                    <p className="text-sm text-error" role="alert">
+                                        {gatewayError}
+                                    </p>
+                                )}
+
+                                <button
+                                    type="button"
+                                    className="btn btn-outline btn-primary w-full"
+                                    onClick={handleGatewayCheckout}
+                                    disabled={gatewayLoading}
+                                >
+                                    {gatewayLoading ? (
+                                        <>
+                                            <span className="loading loading-spinner loading-sm" />
+                                            Connecting to SSLCommerz...
+                                        </>
+                                    ) : (
+                                        "Pay Online with SSLCommerz"
+                                    )}
+                                </button>
+                            </div>
+
                         </form>
                     </div>
                     <button

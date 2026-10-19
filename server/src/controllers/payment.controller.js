@@ -8,6 +8,7 @@ import {
   getPaymentSummary,
   searchPaymentShareholders,
   initiateGatewayPayment,
+  getGatewayPaymentStatus,
 } from "../services/payment.service.js";
 
 import {
@@ -195,5 +196,21 @@ export async function initiateGatewayPaymentController(
     next(error);
   }
 }
+
+export async function getGatewayPaymentStatusController(req, res, next) {
+  try {
+    const payment = await getGatewayPaymentStatus(
+      req.params.paymentId
+    );
+
+    return res.status(200).json({
+      success: true,
+      data: payment,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
 
 

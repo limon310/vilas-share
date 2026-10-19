@@ -524,4 +524,30 @@ export async function initiateGatewayPayment({
   }
 }
 
+export async function getGatewayPaymentStatus(paymentId) {
+  if (!/^[a-f\d]{24}$/i.test(paymentId)) {
+    const error = new Error("Invalid payment ID.");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const payment = await Payment.findOne({
+    _id: paymentId,
+    paymentType: "gateway",
+    paymentMethod: "sslcommerz",
+  })
+    .select(
+      "_id amount status gatewayTransactionId createdAt verifiedAt"
+    )
+    .lean();
+
+  if (!payment) {
+    const error = new Error("Gateway payment not found.");
+    error.statusCode = 404;
+    throw error;
+  }
+
+  return payment;
+}
+
 
