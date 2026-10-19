@@ -10,6 +10,7 @@ import {
     searchPaymentShareholdersController,
     initiateGatewayPaymentController,
     getGatewayPaymentStatusController,
+    getShareholderPaymentLedgerController,
 } from "../controllers/payment.controller.js";
 
 import {
@@ -47,8 +48,13 @@ router.get(
 );
 
 router.get(
-  "/gateway/:paymentId/status",
-  getGatewayPaymentStatusController
+    "/gateway/:paymentId/status",
+    getGatewayPaymentStatusController
+);
+
+router.get(
+    "/shareholders/:shareholderId/ledger",
+    getShareholderPaymentLedgerController
 );
 
 router.get("/summary", getPaymentSummaryController);

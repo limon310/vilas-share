@@ -550,4 +550,142 @@ export async function getGatewayPaymentStatus(paymentId) {
   return payment;
 }
 
+export async function getShareholderPaymentLedger(shareholderId) {
+  if (!/^[a-f\d]{24}$/i.test(shareholderId)) {
+    const error = new Error("Invalid shareholder ID.");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const shareholder = await Shareholder.findById(shareholderId)
+    .select("fullName shareholderCode status")
+    .lean();
+
+  if (!shareholder) {
+    const error = new Error("Shareholder not found.");
+    error.statusCode = 404;
+    throw error;
+  }
+
+  const project = await Project.findOne({
+    projectKey: "main",
+  }).lean();
+
+  if (!project) {
+    const error = new Error("Project not found.");
+    error.statusCode = 404;
+    throw error;
+  }
+
+  const [allocations, paymentTotals, history] = await Promise.all([
+    ShareAllocation.aggregate([
+      {
+        $match: {
+          shareholder: shareholder._id,
+          project: project._id,
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          totalAllocatedAmount: { $sum: "$totalAmount" },
+          totalShares: { $sum: "$quantity" },
+        },
+      },
+    ]),
+
+    Payment.aggregate([
+      {
+        $match: {
+          shareholder: shareholder._id,
+          project: project._id,
+        },
+      },
+      {
+        $group: {
+          _id: "$status",
+          amount: { $sum: "$amount" },
+          count: { $sum: 1 },
+        },
+      },
+    ]),
+
+    Payment.find({
+      shareholder: shareholder._id,
+      project: project._id,
+    })
+      .select(
+        "amount paymentMethod paymentType status transactionReference gatewayTransactionId gatewayValidationId paidAt verifiedAt createdAt notes"
+      )
+      .sort({ createdAt: -1 })
+      .limit(100)
+      .lean(),
+  ]);
+
+  const allocatedAmount = allocations[0]?.totalAllocatedAmount ?? 0;
+  const totalShares = allocations[0]?.totalShares ?? 0;
+
+  const totals = {
+    verifiedAmount: 0,
+    pendingAmount: 0,
+    rejectedAmount: 0,
+    failedAmount: 0,
+    verifiedCount: 0,
+    pendingCount: 0,
+  };
+
+  for (const item of paymentTotals) {
+    if (item._id === "verified") {
+      totals.verifiedAmount = item.amount;
+      totals.verifiedCount = item.count;
+    } else if (item._id === "pending") {
+      totals.pendingAmount = item.amount;
+      totals.pendingCount = item.count;
+    } else if (item._id === "rejected") {
+      totals.rejectedAmount = item.amount;
+    } else if (item._id === "failed") {
+      totals.failedAmount = item.amount;
+    }
+  }
+
+  const money = (value) =>
+    Math.round((value + Number.EPSILON) * 100) / 100;
+
+  return {
+    shareholder,
+    project: {
+      _id: project._id,
+      projectKey: project.projectKey,
+    },
+    summary: {
+      totalShares,
+      allocatedAmount: money(allocatedAmount),
+      verifiedAmount: money(totals.verifiedAmount),
+      pendingAmount: money(totals.pendingAmount),
+
+      // Pending payments have not yet been confirmed as paid.
+      outstandingAmount: money(
+        Math.max(0, allocatedAmount - totals.verifiedAmount)
+      ),
+
+      // Useful for preventing another payment request exceeding the balance.
+      availableBalance: money(
+        Math.max(
+          0,
+          allocatedAmount -
+          totals.verifiedAmount -
+          totals.pendingAmount
+        )
+      ),
+
+      verifiedCount: totals.verifiedCount,
+      pendingCount: totals.pendingCount,
+      rejectedAmount: money(totals.rejectedAmount),
+      failedAmount: money(totals.failedAmount),
+    },
+    history,
+  };
+}
+
+
 

@@ -9,6 +9,7 @@ import {
   searchPaymentShareholders,
   initiateGatewayPayment,
   getGatewayPaymentStatus,
+  getShareholderPaymentLedger,
 } from "../services/payment.service.js";
 
 import {
@@ -206,6 +207,25 @@ export async function getGatewayPaymentStatusController(req, res, next) {
     return res.status(200).json({
       success: true,
       data: payment,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function getShareholderPaymentLedgerController(
+  req,
+  res,
+  next
+) {
+  try {
+    const ledger = await getShareholderPaymentLedger(
+      req.params.shareholderId
+    );
+
+    return res.status(200).json({
+      success: true,
+      data: ledger,
     });
   } catch (error) {
     next(error);
