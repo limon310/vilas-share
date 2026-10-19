@@ -8,6 +8,7 @@ import authRoutes from "./routes/auth.routes.js";
 import projectRoutes from "./routes/project.routes.js";
 import shareAllocationRoutes from "./routes/shareAllocation.routes.js";
 import paymentRoutes from "./routes/payment.routes.js";
+import installmentRoutes from "./routes/installment.routes.js";
 
 
 const app = express();
@@ -24,6 +25,9 @@ app.use(
 app.use(express.json({ limit: "100kb" }));
 app.use(morgan("dev"));
 app.use(express.urlencoded({ extended: true }));
+
+// install route mount
+app.use("/api/installments", installmentRoutes);
 
 app.use(
   "/api",
