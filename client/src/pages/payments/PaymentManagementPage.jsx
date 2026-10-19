@@ -37,6 +37,17 @@ const statusStyles = {
     failed: "badge-ghost",
 };
 
+function getPaymentStatusClass(status) {
+    const classes = {
+        verified: "badge-success",
+        pending: "badge-warning",
+        rejected: "badge-error",
+        failed: "badge-error",
+    };
+
+    return classes[status] || "badge-ghost";
+}
+
 const money = (value) =>
     new Intl.NumberFormat("en-BD", {
         style: "currency",
@@ -454,11 +465,37 @@ export default function PaymentManagementPage() {
                                             <td className="font-semibold">
                                                 {money(payment.amount)}
                                             </td>
-                                            <td className="capitalize">
+                                            {/* <td className="capitalize">
                                                 {payment.paymentMethod?.replaceAll("_", " ")}
+                                            </td> */}
+                                            <td>
+                                                <div className="flex flex-col gap-1">
+                                                    <span className="font-medium">
+                                                        {payment.paymentMethod === "sslcommerz"
+                                                            ? "SSLCommerz"
+                                                            : payment.paymentMethod.replace("_", " ")}
+                                                    </span>
+
+                                                    <span className="badge badge-ghost badge-sm">
+                                                        {payment.paymentType === "gateway" ? "Online" : "Manual"}
+                                                    </span>
+                                                </div>
                                             </td>
-                                            <td className="max-w-44 truncate">
+                                            {/* <td className="max-w-44 truncate">
                                                 {payment.transactionReference || "—"}
+                                            </td> */}
+                                            <td>
+                                                <span className="font-mono text-sm">
+                                                    {payment.gatewayTransactionId ||
+                                                        payment.transactionReference ||
+                                                        "—"}
+                                                </span>
+
+                                                {payment.gatewayValidationId && (
+                                                    <p className="mt-1 text-xs text-base-content/60">
+                                                        Validation: {payment.gatewayValidationId}
+                                                    </p>
+                                                )}
                                             </td>
                                             <td>{dateFormat(payment.paidAt)}</td>
                                             <td>
@@ -469,7 +506,7 @@ export default function PaymentManagementPage() {
                                                 </span>
                                             </td>
                                             <td>
-                                                {payment.status === "pending" ? (
+                                                {/* {payment.status === "pending" ? (
                                                     <div className="flex items-center gap-1">
                                                         <button
                                                             type="button"
@@ -504,7 +541,27 @@ export default function PaymentManagementPage() {
                                                     <span className="text-xs text-base-content/50">
                                                         Reviewed
                                                     </span>
-                                                )}
+                                                )} */}
+                                                {payment.status === "pending" &&
+                                                    payment.paymentType === "manual" && (
+                                                        <div className="flex gap-2">
+                                                            <button
+                                                                type="button"
+                                                                className="btn btn-success btn-sm"
+                                                                onClick={() => handleReview(payment._id, "verified")}
+                                                            >
+                                                                Verify
+                                                            </button>
+
+                                                            <button
+                                                                type="button"
+                                                                className="btn btn-error btn-sm"
+                                                                onClick={() => handleReview(payment._id, "rejected")}
+                                                            >
+                                                                Reject
+                                                            </button>
+                                                        </div>
+                                                    )}
                                             </td>
                                         </tr>
                                     ))
