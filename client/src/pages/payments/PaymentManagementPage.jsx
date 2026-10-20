@@ -148,18 +148,6 @@ export default function PaymentManagementPage() {
         setError("");
 
         try {
-            //   const result = await getPayments({
-            //     page: pagination.page,
-            //     limit: pagination.limit,
-            //     status: filter,
-            //     search,
-            //   });
-
-            //   setPayments(result.data || []);
-            //   setPagination((current) => ({
-            //     ...current,
-            //     ...(result.pagination || {}),
-            //   }));
             const [result, summaryResult] = await Promise.all([
                 getPayments({
                     page: pagination.page,
